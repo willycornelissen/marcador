@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Marcador — Wireframe (sidebar)</title>
+<!--
+  WIREFRAME RÚSTICO — sketch, não mockup final.
+  Sem cor, fonte de sistema, bordas cinza finas, elementos "desenhados".
+  Decisões de layout marcadas com comentários HTML.
+
+  Estados mostrados (abas):
+    1. DESKTOP  — sidebar fixa 240px + header + conteúdo da coleção ativa
+    2. MOBILE   — sidebar vira drawer (overlay + hambúrguer)
+    3. MODAL    — criar/editar bookmark
+-->
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #f4f4f5;
+    color: #18181b;
+    padding: 24px;
+  }
+
+  .doc-title { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+  .doc-sub { font-size: 12px; color: #52525b; margin-bottom: 20px; }
+
+  .tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+  .tab {
+    border: 1px solid #a1a1aa;
+    background: #fff;
+    padding: 6px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+  .tab.active { background: #18181b; color: #fff; border-color: #18181b; }
+
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* Frame do app = caixa que encapsula header+sidebar+content */
+  .app-frame {
+    border: 1.5px solid #18181b;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+    max-width: 1100px;
+    position: relative;
+  }
+
+  /* ---- Header ---- */
+  .header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 16px;
+    border-bottom: 1.5px dashed #a1a1aa;
+    background: #fff;
+  }
+  .logo { font-size: 16px; font-weight: 800; letter-spacing: -0.02em; }
+  .logo .dot { color: #d4d4d8; } /* acento âmbar no final — cor só no mockup */
+  .search {
+    flex: 1; max-width: 480px;
+    border: 1px dashed #a1a1aa;
+    border-radius: 6px;
+    padding: 7px 12px;
+    font-size: 13px;
+    color: #71717a;
+  }
+  .header-actions { display: flex; gap: 8px; margin-left: auto; }
+  .btn {
+    border: 1px solid #18181b;
+    border-radius: 6px;
+    padding: 7px 14px;
+    font-size: 13px;
+    background: #fff;
+    cursor: pointer;
+  }
+  .btn.primary { background: #18181b; color: #fff; }
+  .btn.ghost { border-style: dashed; }
+
+  /* ---- Corpo: sidebar + conteúdo ---- */
+  .body { display: flex; min-height: 460px; }
+
+  /* ---- Sidebar ---- */
+  .sidebar {
+    width: 240px;
+    border-right: 1.5px dashed #a1a1aa;
+    background: #fafafa;
+    padding: 14px 10px;
+    flex-shrink: 0;
+  }
+  .side-label {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; color: #71717a;
+    padding: 0 8px; margin-bottom: 8px;
+  }
+  .side-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 7px 8px; font-size: 13px; border-radius: 6px; cursor: pointer;
+  }
+  .side-item.active { border: 1px solid #18181b; background: #fff; font-weight: 600; }
+  .side-item .count {
+    font-size: 11px; color: #71717a;
+    border: 1px solid #d4d4d8; border-radius: 999px;
+    padding: 0 6px;
+  }
+  /* Categorias aninhadas (indent) */
+  .side-sub { padding-left: 22px; }
+  .side-sub .side-item { border-left: 1px dashed #d4d4d8; }
+  .side-item.sub { font-weight: 400; color: #3f3f46; }
+  .side-new { color: #71717a; border-style: dashed; margin-top: 6px; }
+
+  /* ---- Conteúdo ---- */
+  .content { flex: 1; padding: 20px; background: #fff; }
+  .content-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 16px; }
+  .content-title { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
+  .content-meta { font-size: 12px; color: #71717a; }
+
+  /* Categorias como cards coloridos em grid */
+  .cats { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+  .cat-card {
+    border: 1px solid #a1a1aa; border-radius: 8px; padding: 12px;
+    border-top: 3px solid #a1a1aa; /* cor da categoria no mockup */
+  }
+  .cat-card:first-child { border-top-color: #18181b; }
+  .cat-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .cat-name { font-size: 14px; font-weight: 700; }
+  .cat-count { font-size: 11px; color: #71717a; }
+  .cat-empty {
+    font-size: 12px; color: #a1a1aa; font-style: italic;
+    border: 1px dashed #d4d4d8; border-radius: 6px; padding: 10px; text-align: center;
+  }
+
+  /* Bookmark = card com favicon + título + URL + nota */
+  .bm {
+    display: flex; gap: 10px; align-items: flex-start;
+    border: 1px solid #e4e4e7; border-radius: 6px;
+    padding: 8px 10px; margin-bottom: 8px; cursor: pointer;
+  }
+  .bm-fav {
+    width: 22px; height: 22px; border-radius: 4px;
+    border: 1px solid #d4d4d8; background: #fafafa;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; color: #71717a; flex-shrink: 0;
+  }
+  .bm-title { font-size: 13px; font-weight: 600; }
+  .bm-url { font-size: 11px; color: #71717a; margin-top: 1px; }
+  .bm-note { font-size: 11px; color: #a1a1aa; margin-top: 3px; }
+
+  /* ---- Mobile: header com hambúrguer + drawer ---- */
+  .hamb {
+    width: 34px; height: 34px; border: 1px solid #18181b; border-radius: 6px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 4px; background: #fff; cursor: pointer;
+  }
+  .hamb span { display: block; width: 16px; height: 1.5px; background: #18181b; }
+  .mobile-header { display: none; }
+  .drawer {
+    position: absolute; top: 0; left: 0; bottom: 0; width: 240px;
+    background: #fafafa; border-right: 1.5px dashed #18181b;
+    padding: 14px 10px; z-index: 5; transform: translateX(-110%);
+  }
+  .drawer.open { transform: translateX(0); }
+  .overlay {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.15);
+    z-index: 4; display: none;
+  }
+  .overlay.show { display: block; }
+  .drawer-handle { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+  .x { border: 1px solid #18181b; border-radius: 4px; width: 26px; height: 26px; cursor: pointer; background: #fff; }
+
+  /* ---- Modal ---- */
+  .modal-wrap {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.25);
+    display: none; align-items: center; justify-content: center; z-index: 20;
+  }
+  .modal-wrap.show { display: flex; }
+  .modal {
+    width: 100%; max-width: 420px;
+    background: #fff; border: 1.5px solid #18181b; border-radius: 10px;
+    padding: 20px;
+  }
+  .modal h3 { font-size: 15px; font-weight: 700; margin-bottom: 14px; }
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px; }
+  .field input, .field textarea {
+    width: 100%; border: 1px dashed #a1a1aa; border-radius: 6px;
+    padding: 7px 10px; font-size: 13px; font-family: inherit;
+  }
+  .field textarea { resize: vertical; min-height: 48px; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+
+  .hint { font-size: 11px; color: #a1a1aa; margin-top: 14px; max-width: 1100px; }
+  .hint code { background: #e4e4e7; padding: 0 4px; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div class="doc-title">Marcador — Wireframe de layout</div>
+<div class="doc-sub">Sidebar vertical fixa de coleções · estilos: <strong>Trabalho</strong> ativa · <em>sketch intencionalmente bruto, sem cor final</em></div>
+
+<div class="tabs">
+  <button class="tab active" data-view="desktop">1 · Desktop</button>
+  <button class="tab" data-view="mobile">2 · Mobile (drawer)</button>
+  <button class="tab" data-view="modal">3 · Modal criar/editar</button>
+</div>
+
+<!-- ===================== VIEW 1: DESKTOP ===================== -->
+<div class="view active" id="view-desktop">
+  <div class="app-frame">
+    <!-- Header sticky: logo | busca | ações -->
+    <div class="header">
+      <div class="logo">Marcador<span class="dot">.</span></div>
+      <div class="search">Buscar por título, URL ou nota…</div>
+      <div class="header-actions">
+        <button class="btn primary">+ Adicionar bookmark</button>
+        <button class="btn ghost">Entrar</button>
+      </div>
+    </div>
+    <div class="body">
+      <!-- Sidebar fixa 240px -->
+      <aside class="sidebar">
+        <div class="side-label">Coleções</div>
+        <div class="side-item active">Trabalho <span class="count">24</span></div>
+        <!-- Categorias da coleção ativa, indentadas -->
+        <div class="side-sub">
+          <div class="side-item sub active">▸ Design</div>
+          <div class="side-item sub">▸ Engenharia</div>
+          <div class="side-item sub">▸ Leitura</div>
+        </div>
+        <div class="side-item">Pessoal <span class="count">11</span></div>
+        <div class="side-item">Dev <span class="count">37</span></div>
+        <div class="side-item">Referência <span class="count">8</span></div>
+        <div class="side-item side-new">+ Nova coleção</div>
+      </aside>
+
+      <!-- Conteúdo: categorias em cards coloridos -->
+      <main class="content">
+        <div class="content-head">
+          <div>
+            <div class="content-title">Trabalho</div>
+            <div class="content-meta">3 categorias · 24 bookmarks</div>
+          </div>
+          <button class="btn ghost">+ Nova categoria</button>
+        </div>
+        <div class="cats">
+          <!-- Categoria: Design -->
+          <div class="cat-card">
+            <div class="cat-head"><span class="cat-name">Design</span><span class="cat-count">9</span></div>
+            <div class="bm">
+              <div class="bm-fav">F</div>
+              <div>
+                <div class="bm-title">Figma — colaboração em design</div>
+                <div class="bm-url">figma.com</div>
+                <div class="bm-note">Conta principal do time</div>
+              </div>
+            </div>
+            <div class="bm">
+              <div class="bm-fav">N</div>
+              <div>
+                <div class="bm-title">Neumorphism.io</div>
+                <div class="bm-url">neumorphism.io</div>
+              </div>
+            </div>
+            <div class="bm">
+              <div class="bm-fav">U</div>
+              <div>
+                <div class="bm-title">UI UX Pro Max</div>
+                <div class="bm-url">github.com</div>
+              </div>
+            </div>
+          </div>
+          <!-- Categoria: Engenharia -->
+          <div class="cat-card">
+            <div class="cat-head"><span class="cat-name">Engenharia</span><span class="cat-count">11</span></div>
+            <div class="bm">
+              <div class="bm-fav">M</div>
+              <div>
+                <div class="bm-title">MDN Web Docs</div>
+                <div class="bm-url">developer.mozilla.org</div>
+              </div>
+            </div>
+            <div class="bm">
+              <div class="bm-fav">G</div>
+              <div>
+                <div class="bm-title">GitHub Actions docs</div>
+                <div class="bm-url">docs.github.com</div>
+              </div>
+            </div>
+          </div>
+          <!-- Categoria: Leitura (vazia → empty state) -->
+          <div class="cat-card">
+            <div class="cat-head"><span class="cat-name">Leitura</span><span class="cat-count">0</span></div>
+            <div class="cat-empty">Nenhum bookmark ainda. Adicionar o primeiro →</div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== VIEW 2: MOBILE (drawer) ===================== -->
+<div class="view" id="view-mobile">
+  <div class="app-frame">
+    <!-- Header mobile: hambúrguer + logo + busca -->
+    <div class="header mobile-header" style="display:flex">
+      <button class="hamb" data-open-drawer><span></span><span></span><span></span></button>
+      <div class="logo">Marcador<span class="dot">.</span></div>
+      <div class="search">Buscar…</div>
+    </div>
+    <!-- Aviso: no desktop a sidebar fica fixa; aqui vira drawer -->
+    <div class="body">
+      <aside class="drawer" id="drawer">
+        <div class="drawer-handle"><button class="x" data-close-drawer>✕</button></div>
+        <div class="side-label">Coleções</div>
+        <div class="side-item active">Trabalho <span class="count">24</span></div>
+        <div class="side-sub">
+          <div class="side-item sub active">▸ Design</div>
+          <div class="side-item sub">▸ Engenharia</div>
+          <div class="side-item sub">▸ Leitura</div>
+        </div>
+        <div class="side-item">Pessoal <span class="count">11</span></div>
+        <div class="side-item">Dev <span class="count">37</span></div>
+        <div class="side-item side-new">+ Nova coleção</div>
+      </aside>
+      <div class="overlay" id="overlay" data-close-drawer></div>
+      <main class="content" style="padding:14px">
+        <div class="content-head">
+          <div>
+            <div class="content-title" style="font-size:18px">Trabalho</div>
+            <div class="content-meta">3 categorias · 24 bookmarks</div>
+          </div>
+        </div>
+        <div class="cats" style="grid-template-columns:1fr">
+          <div class="cat-card">
+            <div class="cat-head"><span class="cat-name">Design</span><span class="cat-count">9</span></div>
+            <div class="bm">
+              <div class="bm-fav">F</div>
+              <div><div class="bm-title">Figma</div><div class="bm-url">figma.com</div></div>
+            </div>
+            <div class="bm">
+              <div class="bm-fav">N</div>
+              <div><div class="bm-title">Neumorphism.io</div><div class="bm-url">neumorphism.io</div></div>
+            </div>
+          </div>
+          <div class="cat-card">
+            <div class="cat-head"><span class="cat-name">Engenharia</span><span class="cat-count">11</span></div>
+            <div class="bm">
+              <div class="bm-fav">M</div>
+              <div><div class="bm-title">MDN Web Docs</div><div class="bm-url">developer.mozilla.org</div></div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== VIEW 3: MODAL ===================== -->
+<div class="view" id="view-modal">
+  <div class="app-frame" style="min-height:460px">
+    <div class="header">
+      <div class="logo">Marcador<span class="dot">.</span></div>
+      <div class="search">Buscar por título, URL ou nota…</div>
+      <div class="header-actions">
+        <button class="btn primary">+ Adicionar bookmark</button>
+        <button class="btn ghost">Willy C.</button>
+      </div>
+    </div>
+    <div class="body">
+      <aside class="sidebar">
+        <div class="side-label">Coleções</div>
+        <div class="side-item active">Trabalho <span class="count">24</span></div>
+        <div class="side-sub">
+          <div class="side-item sub active">▸ Design</div>
+          <div class="side-item sub">▸ Engenharia</div>
+        </div>
+        <div class="side-item side-new">+ Nova coleção</div>
+      </aside>
+      <main class="content">
+        <div class="content-head">
+          <div>
+            <div class="content-title">Trabalho</div>
+            <div class="content-meta">2 categorias · 20 bookmarks</div>
+          </div>
+        </div>
+        <div class="cats" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr))">
+          <div class="cat-card">
+            <div class="cat-head"><span class="cat-name">Design</span><span class="cat-count">9</span></div>
+            <div class="bm">
+              <div class="bm-fav">F</div>
+              <div><div class="bm-title">Figma</div><div class="bm-url">figma.com</div></div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Modal por cima, fundo escurecido -->
+  <div class="modal-wrap show" id="modal">
+    <div class="modal">
+      <h3>Novo bookmark</h3>
+      <div class="field">
+        <label>Título</label>
+        <input type="text" value="React Documentation" />
+      </div>
+      <div class="field">
+        <label>URL</label>
+        <input type="text" value="https://react.dev" />
+      </div>
+      <div class="field">
+        <label>Nota</label>
+        <textarea>Referência oficial da API React.</textarea>
+      </div>
+      <div class="field">
+        <label>Categorias (pode ser em várias)</label>
+        <input type="text" value="Design, Engenharia" />
+      </div>
+      <div class="modal-actions">
+        <button class="btn ghost">Cancelar</button>
+        <button class="btn primary">Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="hint">
+  Anotações: (1) sidebar fixa 240px no desktop; (2) no mobile vira drawer com
+  overlay (teste o botão hambúrguer); (3) o modal de bookmark tem campo de
+  <em>categorias múltiplas</em> — espelha o many-to-many; (4) cores/categorias só
+  como borda superior no card (semântica: cada categoria tem sua cor). Cores finais
+  (dark stone + âmbar) aplicadas no mockup real.
+</div>
+
+<script>
+  // Alternância de abas
+  document.querySelectorAll('.tab').forEach((tab) => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach((t) => t.classList.remove('active'));
+      tab.classList.add('active');
+      document.querySelectorAll('.view').forEach((v) => v.classList.remove('active'));
+      document.getElementById('view-' + tab.dataset.view).classList.add('active');
+    });
+  });
+
+  // Interação mínima do drawer (mobile)
+  const drawer = document.getElementById('drawer');
+  const overlay = document.getElementById('overlay');
+  if (drawer) {
+    document.querySelectorAll('[data-open-drawer]').forEach((b) =>
+      b.addEventListener('click', () => { drawer.classList.add('open'); overlay.classList.add('show'); }));
+    document.querySelectorAll('[data-close-drawer]').forEach((b) =>
+      b.addEventListener('click', () => { drawer.classList.remove('open'); overlay.classList.remove('show'); }));
+  }
+</script>
+</body>
+</html>
