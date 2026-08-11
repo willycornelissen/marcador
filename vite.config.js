@@ -7,8 +7,12 @@ import { fileURLToPath } from 'url'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const hasCname = fs.existsSync(path.resolve(__dirname, 'public/CNAME'))
 
-// base: caminho do repositório no GitHub Pages. Ajuste se o nome do repo mudar.
+// base: './' resolve os assets relativamente à própria página, então o build
+// funciona em qualquer hospedagem (subpasta do GitHub Pages ou domínio próprio
+// na raiz). Sem CNAME, VITE_BASE continua valendo.
+// Obs.: nunca abra dist/index.html direto via file:// — os módulos ES são
+// bloqueados por CORS fora de HTTP; use `npm run preview` (ou um servidor).
 export default defineConfig({
   plugins: [react()],
-  base: hasCname ? '/' : (process.env.VITE_BASE || '/marcador/'),
+  base: hasCname ? './' : (process.env.VITE_BASE || '/marcador/'),
 })

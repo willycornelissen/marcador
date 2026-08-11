@@ -478,28 +478,12 @@ function App() {
   useEffect(() => {
     if (!auth) return
     return subscribeData((update) => {
-      setCollections((prev) => update(prev).collections)
-    })
-  }, [])
-
-  useEffect(() => {
-    if (!auth) return
-    return subscribeData((update) => {
-      setCategories((prev) => update(prev).categories)
-    })
-  }, [])
-
-  useEffect(() => {
-    if (!auth) return
-    return subscribeData((update) => {
-      setBookmarks((prev) => update(prev).bookmarks)
-    })
-  }, [])
-
-  useEffect(() => {
-    if (!auth) return
-    return subscribeData((update) => {
-      setLinks((prev) => update(prev).links)
+      // update() devolve só a fatia que mudou; aplica apenas essa.
+      const next = update({})
+      if ('collections' in next) setCollections(next.collections)
+      if ('categories' in next) setCategories(next.categories)
+      if ('bookmarks' in next) setBookmarks(next.bookmarks)
+      if ('links' in next) setLinks(next.links)
     })
   }, [])
 
