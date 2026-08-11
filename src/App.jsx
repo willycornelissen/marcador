@@ -25,6 +25,10 @@ function hostOf(url) {
   }
 }
 
+function byName(a, b) {
+  return (a.name || '').localeCompare(b.name || '', 'pt', { sensitivity: 'base' })
+}
+
 function faviconUrl(host) {
   return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(host)}&sz=64`
 }
@@ -377,7 +381,9 @@ function CollectionView({
   onEditBookmark,
   onDeleteBookmark,
 }) {
-  const colCats = categories.filter((c) => c.collectionId === collection.id)
+  const colCats = categories
+    .filter((c) => c.collectionId === collection.id)
+    .sort(byName)
   if (colCats.length === 0) {
     return (
       <div className="cats">
@@ -395,7 +401,8 @@ function CollectionView({
           cat={cat}
           bookmarks={(linksByCategory.get(cat.id) || [])
             .map((id) => bookmarksById.get(id))
-            .filter(Boolean)}
+            .filter(Boolean)
+            .sort(byName)}
           onAddBookmark={onAddBookmark}
           onEditBookmark={onEditBookmark}
           onDeleteBookmark={onDeleteBookmark}
@@ -495,11 +502,16 @@ function App() {
     })
   }, [])
 
+  const sortedCollections = useMemo(
+    () => [...collections].sort(byName),
+    [collections]
+  )
+
   useEffect(() => {
     if (activeCollectionId && !collections.some((c) => c.id === activeCollectionId)) {
-      setActiveCollectionId(collections[0]?.id || null)
+      setActiveCollectionId(sortedCollections[0]?.id || null)
     }
-  }, [collections, activeCollectionId])
+  }, [collections, sortedCollections, activeCollectionId])
 
   function flash(message) {
     setNotice(message)
@@ -507,7 +519,7 @@ function App() {
   }
 
   const activeCollection =
-    collections.find((c) => c.id === activeCollectionId) || collections[0] || null
+    sortedCollections.find((c) => c.id === activeCollectionId) || sortedCollections[0] || null
 
   const categoriesByBookmark = useMemo(() => {
     const map = new Map()
@@ -536,12 +548,14 @@ function App() {
   const searchResults = useMemo(() => {
     const q = search.trim().toLowerCase()
     if (!q) return null
-    return bookmarks.filter(
-      (bm) =>
-        bm.name.toLowerCase().includes(q) ||
-        bm.url.toLowerCase().includes(q) ||
-        (bm.note || '').toLowerCase().includes(q)
-    )
+    return bookmarks
+      .filter(
+        (bm) =>
+          bm.name.toLowerCase().includes(q) ||
+          bm.url.toLowerCase().includes(q) ||
+          (bm.note || '').toLowerCase().includes(q)
+      )
+      .sort(byName)
   }, [search, bookmarks])
 
   function countBookmarksFor(colId, cats) {
@@ -624,7 +638,7 @@ function App() {
       <div className="body">
         <aside className={`sidebar${drawerOpen ? ' open' : ''}`}>
           <div className="side-label">Coleções</div>
-          {collections.map((col) => (
+          {sortedCollections.map((col) => (
             <div
               key={col.id}
               className={`side-item${col.id === activeCollection?.id ? ' active' : ''}`}
@@ -654,6 +668,7 @@ function App() {
               <div className="side-sub">
                 {categories
                   .filter((c) => c.collectionId === activeCollection?.id)
+                  .sort(byName)
                   .map((cat) => (
                     <div className="side-item sub" key={cat.id}>
                       <span className="dot" style={{ background: cat.color }} />
