@@ -13,7 +13,8 @@ próprio e import/export no formato Netscape HTML.
 - **Listagens em ordem alfabética** — coleções, categorias e bookmarks são
   ordenados por nome (ignorando maiúsculas e acentos).
 - **Import/export Netscape** — migre de qualquer navegador ou do booky.io.
-- **Tema dark** — pedra + âmbar.
+- **Tema claro e escuro** — botão no topo alterna entre os dois; a preferência é
+  lembrada e o padrão segue o tema do sistema.
 - **Domínio próprio** — publicado em `marcador.willy.dev.br`.
 
 ## Stack

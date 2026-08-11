@@ -57,6 +57,23 @@ function Favicon({ url, name }) {
   )
 }
 
+function SunIcon() {
+  return (
+    <svg viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+    </svg>
+  )
+}
+
+function MoonIcon() {
+  return (
+    <svg viewBox="0 0 24 24">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+    </svg>
+  )
+}
+
 function LoginForm({ onMessage }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -314,104 +331,46 @@ function ImportExport({ catalog, onImported, onMessage }) {
   )
 }
 
-function CategoryCard({
-  cat,
-  bookmarks,
-  onAddBookmark,
-  onEditBookmark,
-  onDeleteBookmark,
-}) {
+function BookmarkCombo({ bm, onEdit, onDelete }) {
+  const [open, setOpen] = useState(true)
   return (
-    <section className="cat-card">
-      <div className="cat-head">
-        <div className="cat-name">
-          <span className="dot" style={{ background: cat.color }} />
-          {cat.name}
-        </div>
-        <div className="cat-count">{bookmarks.length}</div>
-      </div>
-      {bookmarks.length === 0 && <div className="cat-empty">Sem bookmarks.</div>}
-      {bookmarks.map((bm) => (
-        <article className="bm" key={bm.id}>
+    <section className={`cat-card${open ? ' open' : ''}`}>
+      <button
+        className="cat-head"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <span className="cat-name">
           <Favicon url={bm.url} name={bm.name} />
-          <div className="bm-main">
-            <a
-              className="bm-title"
-              href={bm.url}
-              target="_blank"
-              rel="noreferrer"
-            >
-              {bm.name}
-            </a>
-            <div className="bm-url">{hostOf(bm.url) || bm.url}</div>
-            {bm.note && <div className="bm-note">{bm.note}</div>}
-          </div>
+          <span className="cat-name-text">{bm.name}</span>
+        </span>
+        <span className="cat-head-right">
+          <svg className="chev" viewBox="0 0 24 24">
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </span>
+      </button>
+      {open && (
+        <div className="bm-combo-body">
+          <a className="bm-title" href={bm.url} target="_blank" rel="noreferrer">
+            {hostOf(bm.url) || bm.url}
+          </a>
+          {bm.note && <div className="bm-note">{bm.note}</div>}
           <div className="bm-actions">
-            <button
-              className="icon-btn"
-              title="Editar"
-              onClick={() => onEditBookmark(bm, cat.id)}
-            >
+            <button className="icon-btn" title="Editar" onClick={() => onEdit(bm)}>
               ✎
             </button>
             <button
               className="icon-btn danger"
               title="Remover"
-              onClick={() => onDeleteBookmark(bm, cat.id)}
+              onClick={() => onDelete(bm)}
             >
               ✕
             </button>
           </div>
-        </article>
-      ))}
-      <button className="btn ghost mini" onClick={() => onAddBookmark(cat.id)}>
-        + Bookmark
-      </button>
-    </section>
-  )
-}
-
-function CollectionView({
-  collection,
-  categories,
-  linksByCategory,
-  bookmarksById,
-  onAddCategory,
-  onAddBookmark,
-  onEditBookmark,
-  onDeleteBookmark,
-}) {
-  const colCats = categories
-    .filter((c) => c.collectionId === collection.id)
-    .sort(byName)
-  if (colCats.length === 0) {
-    return (
-      <div className="cats">
-        <div className="cat-empty">
-          Nenhuma categoria ainda. Crie a primeira.
         </div>
-      </div>
-    )
-  }
-  return (
-    <div className="cats">
-      {colCats.map((cat) => (
-        <CategoryCard
-          key={cat.id}
-          cat={cat}
-          bookmarks={(linksByCategory.get(cat.id) || [])
-            .map((id) => bookmarksById.get(id))
-            .filter(Boolean)
-            .sort(byName)}
-          onAddBookmark={onAddBookmark}
-          onEditBookmark={onEditBookmark}
-          onDeleteBookmark={onDeleteBookmark}
-        />
-      ))}
-      <button className="btn ghost mini" onClick={onAddCategory}>
-        + Categoria
-      </button>
-    </div>
+      )}
+    </section>
   )
 }
 
@@ -470,17 +429,29 @@ function App() {
   const [bookmarks, setBookmarks] = useState([])
   const [links, setLinks] = useState([])
   const [activeCollectionId, setActiveCollectionId] = useState(null)
+  const [activeCategoryId, setActiveCategoryId] = useState(null)
   const [search, setSearch] = useState('')
   const [modal, setModal] = useState(null)
   const [showLogin, setShowLogin] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [drawerRightOpen, setDrawerRightOpen] = useState(false)
   const [notice, setNotice] = useState(null)
+  const [theme, setTheme] = useState(
+    () => document.documentElement.dataset.theme || 'dark'
+  )
 
   const isAdmin = user?.email === ADMIN_EMAIL
 
   useEffect(() => {
     setFirebaseReady(!!auth)
   }, [])
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme
+    try {
+      localStorage.setItem('marcador-theme', theme)
+    } catch {}
+  }, [theme])
 
   useEffect(() => {
     if (!auth) return
@@ -510,6 +481,7 @@ function App() {
   useEffect(() => {
     if (activeCollectionId && !collections.some((c) => c.id === activeCollectionId)) {
       setActiveCollectionId(sortedCollections[0]?.id || null)
+      setActiveCategoryId(null)
     }
   }, [collections, sortedCollections, activeCollectionId])
 
@@ -520,6 +492,15 @@ function App() {
 
   const activeCollection =
     sortedCollections.find((c) => c.id === activeCollectionId) || sortedCollections[0] || null
+
+  const activeCategory =
+    categories.find(
+      (c) => c.id === activeCategoryId && c.collectionId === activeCollection?.id
+    ) || null
+
+  const rightCats = categories
+    .filter((c) => c.collectionId === activeCollection?.id)
+    .sort(byName)
 
   const categoriesByBookmark = useMemo(() => {
     const map = new Map()
@@ -544,6 +525,14 @@ function App() {
     for (const bm of bookmarks) map.set(bm.id, bm)
     return map
   }, [bookmarks])
+
+  const catBookmarks = useMemo(() => {
+    if (!activeCategory) return []
+    return (linksByCategory.get(activeCategory.id) || [])
+      .map((id) => bookmarksById.get(id))
+      .filter(Boolean)
+      .sort(byName)
+  }, [activeCategory, linksByCategory, bookmarksById])
 
   const searchResults = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -606,14 +595,24 @@ function App() {
           />
         </div>
         <div className="header-actions">
-          {isAdmin && (
-            <button
-              className="btn primary"
-              onClick={() => setModal({})}
-            >
-              <span className="label-lg">Adicionar bookmark</span>＋
-            </button>
-          )}
+          <button
+            className="side-toggle"
+            title="Categorias"
+            aria-label="Abrir categorias"
+            onClick={() => setDrawerRightOpen((v) => !v)}
+          >
+            <svg viewBox="0 0 24 24">
+              <path d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <button
+            className="theme-toggle"
+            title={theme === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro'}
+            aria-label={theme === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro'}
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          >
+            {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
+          </button>
           {user ? (
             <>
               <span className="header-user">{user.email}</span>
@@ -634,6 +633,9 @@ function App() {
       {drawerOpen && (
         <div className="drawer-overlay" onClick={() => setDrawerOpen(false)} />
       )}
+      {drawerRightOpen && (
+        <div className="drawer-overlay" onClick={() => setDrawerRightOpen(false)} />
+      )}
 
       <div className="body">
         <aside className={`sidebar${drawerOpen ? ' open' : ''}`}>
@@ -644,6 +646,7 @@ function App() {
               className={`side-item${col.id === activeCollection?.id ? ' active' : ''}`}
               onClick={() => {
                 setActiveCollectionId(col.id)
+                setActiveCategoryId(null)
                 setDrawerOpen(false)
               }}
             >
@@ -662,20 +665,6 @@ function App() {
               <button className="btn ghost side-new" onClick={handleAddCollection}>
                 + Nova coleção
               </button>
-              <div className="side-label" style={{ marginTop: 16 }}>
-                Categorias de {activeCollection?.name}
-              </div>
-              <div className="side-sub">
-                {categories
-                  .filter((c) => c.collectionId === activeCollection?.id)
-                  .sort(byName)
-                  .map((cat) => (
-                    <div className="side-item sub" key={cat.id}>
-                      <span className="dot" style={{ background: cat.color }} />
-                      <span className="side-name">{cat.name}</span>
-                    </div>
-                  ))}
-              </div>
               <ImportExport
                 catalog={collections}
                 onMessage={flash}
@@ -713,44 +702,98 @@ function App() {
                   .catch(() => flash('Não deu para apagar.'))
               }}
             />
-          ) : activeCollection ? (
-            <CollectionView
-              collection={activeCollection}
-              categories={categories}
-              linksByCategory={linksByCategory}
-              bookmarksById={bookmarksById}
-              onAddCategory={() => {
-                const name = window.prompt('Nome da categoria:')
-                if (!name || !name.trim()) return
-                addCategory(activeCollection.id, name.trim())
-                  .then(() => flash(`Categoria "${name.trim()}" criada.`))
-                  .catch(() => flash('Não deu para criar a categoria.'))
-              }}
-              onAddBookmark={(defaultCategoryId) => setModal({ defaultCategoryId })}
-              onEditBookmark={(bm, defaultCategoryId) =>
-                setModal({
-                  bookmark: {
-                    ...bm,
-                    categoryIds: categoriesByBookmark.get(bm.id) || [],
-                  },
-                  defaultCategoryId,
-                })
-              }
-              onDeleteBookmark={(bm, catId) => {
-                if (!window.confirm(`Apagar "${bm.name}"?`)) return
-                deleteBookmark(bm.id, catId)
-                  .then(() => flash('Bookmark apagado.'))
-                  .catch(() => flash('Não deu para apagar.'))
-              }}
-            />
+          ) : activeCategory ? (
+            <div className="cats">
+              <div className="cats-head">
+                <span className="cats-title">{activeCategory.name}</span>
+                {isAdmin && (
+                  <button
+                    className="btn primary"
+                    onClick={() => setModal({ defaultCategoryId: activeCategory.id })}
+                  >
+                    ＋ Adicionar bookmark
+                  </button>
+                )}
+              </div>
+              {catBookmarks.length === 0 && (
+                <div className="cat-empty">Sem bookmarks nesta categoria.</div>
+              )}
+              {catBookmarks.map((bm) => (
+                <BookmarkCombo
+                  key={bm.id}
+                  bm={bm}
+                  onEdit={(bm) =>
+                    setModal({
+                      bookmark: {
+                        ...bm,
+                        categoryIds: categoriesByBookmark.get(bm.id) || [],
+                      },
+                      defaultCategoryId: activeCategory.id,
+                    })
+                  }
+                  onDelete={(bm) => {
+                    if (!window.confirm(`Apagar "${bm.name}"?`)) return
+                    deleteBookmark(bm.id)
+                      .then(() => flash('Bookmark apagado.'))
+                      .catch(() => flash('Não deu para apagar.'))
+                  }}
+                />
+              ))}
+            </div>
           ) : (
-            <p className="hint">Nenhuma coleção ainda.</p>
+            <p className="hint">
+              {activeCollection
+                ? 'Escolha uma categoria na barra à direita.'
+                : 'Nenhuma coleção ainda.'}
+            </p>
           )}
 
           {showLogin && !user && firebaseReady && (
             <LoginForm onMessage={flash} />
           )}
         </main>
+
+        <aside className={`sidebar right${drawerRightOpen ? ' open' : ''}`}>
+          <div className="side-label">
+            {activeCollection ? `Categorias de ${activeCollection.name}` : 'Categorias'}
+          </div>
+          {rightCats.length === 0 && (
+            <p className="hint">Sem categorias nesta coleção.</p>
+          )}
+          {rightCats.map((cat) => (
+            <div
+              key={cat.id}
+              className={`side-item${cat.id === activeCategory?.id ? ' active' : ''}`}
+              onClick={() => {
+                setActiveCategoryId(cat.id === activeCategory?.id ? null : cat.id)
+                setDrawerRightOpen(false)
+              }}
+            >
+              <span className="side-name">
+                <span className="dot" style={{ background: cat.color }} />
+                {' '}
+                {cat.name}
+              </span>
+              <span className="count">
+                {(linksByCategory.get(cat.id) || []).length}
+              </span>
+            </div>
+          ))}
+          {isAdmin && (
+            <button
+              className="btn ghost side-new"
+              onClick={() => {
+                const name = window.prompt('Nome da categoria:')
+                if (!name || !name.trim()) return
+                addCategory(activeCollection.id, name.trim())
+                  .then(() => flash(`Categoria "${name.trim()}" criada.`))
+                  .catch(() => flash('Não deu para criar a categoria.'))
+              }}
+            >
+              + Nova categoria
+            </button>
+          )}
+        </aside>
       </div>
 
       {modal && (
