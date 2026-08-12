@@ -735,8 +735,23 @@ function App() {
         </main>
 
         <aside className={`sidebar right${drawerRightOpen ? ' open' : ''}`}>
-          <div className="side-label">
-            {activeCollection ? `Categorias de ${activeCollection.name}` : 'Categorias'}
+          <div className="panel-head">
+            {activeCollection && (
+              <span className="panel-head-name">
+                <span
+                  className="swatch"
+                  style={{
+                    background: `color-mix(in srgb, ${activeCollection.color || '#78716c'} 28%, transparent)`,
+                    boxShadow: `inset 0 0 0 1px ${activeCollection.color || '#78716c'}40`,
+                  }}
+                />
+                <span className="panel-head-name-text">{activeCollection.name}</span>
+              </span>
+            )}
+            <div className="panel-head-sub">
+              <span>Categorias</span>
+              <span className="count">{rightCats.length}</span>
+            </div>
           </div>
           {rightCats.length === 0 && (
             <p className="hint">Sem categorias nesta coleção.</p>
