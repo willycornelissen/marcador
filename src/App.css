@@ -321,9 +321,16 @@ body {
 .count {
   font-size: 11px;
   color: var(--text-3);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 1px 7px;
+}
+
+.swatch {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 8px;
 }
 
 .side-sub {

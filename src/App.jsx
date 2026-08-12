@@ -609,8 +609,13 @@ function App() {
                 }}
               >
                 <span className="side-name">
-                  <span className="dot" style={{ background: col.color }} />
-                  {' '}
+                  <span
+                    className="swatch"
+                    style={{
+                      background: `color-mix(in srgb, ${col.color} 28%, transparent)`,
+                      boxShadow: `inset 0 0 0 1px ${col.color}40`,
+                    }}
+                  />
                   {col.name}
                 </span>
                 <span className="side-right">
@@ -748,8 +753,13 @@ function App() {
                 }}
               >
                 <span className="side-name">
-                  <span className="dot" style={{ background: cat.color }} />
-                  {' '}
+                  <span
+                    className="swatch"
+                    style={{
+                      background: `color-mix(in srgb, ${cat.color} 28%, transparent)`,
+                      boxShadow: `inset 0 0 0 1px ${cat.color}40`,
+                    }}
+                  />
                   {cat.name}
                 </span>
                 <span className="side-right">
