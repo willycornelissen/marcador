@@ -84,15 +84,31 @@ body {
 }
 
 .logo {
-  font-size: 18px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 20px;
   font-weight: 800;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.04em;
   font-family: Georgia, "Times New Roman", serif;
   white-space: nowrap;
 }
 
-.logo .dot {
-  color: var(--accent);
+.logo-mark {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.logo-mark svg {
+  width: 16px;
+  height: 16px;
+  fill: var(--accent-ink);
 }
 
 .search {
@@ -382,14 +398,6 @@ body {
 
 .side-item.sub .icon-btn {
   margin-left: auto;
-}
-
-.dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 999px;
-  flex-shrink: 0;
-  display: inline-block;
 }
 
 .side-new {

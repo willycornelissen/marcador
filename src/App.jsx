@@ -535,7 +535,12 @@ function App() {
           <span />
         </button>
         <a className="logo" href="#">
-          Marcador<span className="dot">.</span>
+          <span className="logo-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M7 3h7l4 4v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" />
+            </svg>
+          </span>
+          Marcador
         </a>
         <div className="search">
           <svg viewBox="0 0 24 24">
