@@ -6,6 +6,8 @@ import {
   addCategory,
   addCollection,
   deleteBookmark,
+  deleteCategory,
+  deleteCollection,
   importCatalog,
   subscribeData,
   updateBookmark,
@@ -121,44 +123,14 @@ function LoginForm({ onMessage }) {
   )
 }
 
-function BookmarkModal({
-  bookmark,
-  defaultCategoryId,
-  categories,
-  collections,
-  onSave,
-  onClose,
-}) {
+function BookmarkModal({ bookmark, defaultCategoryId, onSave, onClose }) {
   const [name, setName] = useState(bookmark?.name || '')
   const [url, setUrl] = useState(bookmark?.url || '')
   const [note, setNote] = useState(bookmark?.note || '')
-  const [selected, setSelected] = useState(
-    () =>
-      new Set(bookmark?.categoryIds || (defaultCategoryId ? [defaultCategoryId] : []))
-  )
   const [error, setError] = useState(null)
   const [busy, setBusy] = useState(false)
 
-  const groups = useMemo(() => {
-    const byCol = new Map()
-    for (const cat of categories) {
-      if (!byCol.has(cat.collectionId)) byCol.set(cat.collectionId, [])
-      byCol.get(cat.collectionId).push(cat)
-    }
-    return [...byCol.entries()].map(([collectionId, cats]) => ({
-      collection: collections.find((c) => c.id === collectionId),
-      cats,
-    }))
-  }, [categories, collections])
-
-  function toggle(id) {
-    setSelected((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }
+  const categoryId = defaultCategoryId || bookmark?.categoryIds?.[0] || null
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -169,9 +141,10 @@ function BookmarkModal({
     setBusy(true)
     setError(null)
     try {
-      await onSave({ name: name.trim(), url: url.trim(), note: note.trim() }, [
-        ...selected,
-      ])
+      await onSave(
+        { name: name.trim(), url: url.trim(), note: note.trim() },
+        categoryId ? [categoryId] : []
+      )
       onClose()
     } catch {
       setError('Não deu para salvar.')
@@ -209,28 +182,6 @@ function BookmarkModal({
         <div className="field">
           <label>Nota (opcional)</label>
           <textarea value={note} onChange={(e) => setNote(e.target.value)} />
-        </div>
-        <div className="field">
-          <label>Categorias</label>
-          <div className="cat-pick">
-            {groups.length === 0 && <p className="hint">Nenhuma categoria ainda.</p>}
-            {groups.map(({ collection, cats }) => (
-              <div className="cat-group" key={collection?.id || '?'}>
-                {collection && <div className="cat-group-name">{collection.name}</div>}
-                {cats.map((cat) => (
-                  <label className="cat-opt" key={cat.id}>
-                    <input
-                      type="checkbox"
-                      checked={selected.has(cat.id)}
-                      onChange={() => toggle(cat.id)}
-                    />
-                    <span className="dot" style={{ background: cat.color }} />
-                    {cat.name}
-                  </label>
-                ))}
-              </div>
-            ))}
-          </div>
         </div>
         <div className="modal-actions">
           <button type="button" className="btn ghost" onClick={onClose}>
@@ -331,7 +282,7 @@ function ImportExport({ catalog, onImported, onMessage }) {
   )
 }
 
-function BookmarkCombo({ bm, onEdit, onDelete }) {
+function BookmarkCombo({ bm, canEdit, onEdit, onDelete }) {
   const [open, setOpen] = useState(true)
   return (
     <section className={`cat-card${open ? ' open' : ''}`}>
@@ -356,25 +307,27 @@ function BookmarkCombo({ bm, onEdit, onDelete }) {
             {hostOf(bm.url) || bm.url}
           </a>
           {bm.note && <div className="bm-note">{bm.note}</div>}
-          <div className="bm-actions">
-            <button className="icon-btn" title="Editar" onClick={() => onEdit(bm)}>
-              ✎
-            </button>
-            <button
-              className="icon-btn danger"
-              title="Remover"
-              onClick={() => onDelete(bm)}
-            >
-              ✕
-            </button>
-          </div>
+          {canEdit && (
+            <div className="bm-actions">
+              <button className="icon-btn" title="Editar" onClick={() => onEdit(bm)}>
+                ✎
+              </button>
+              <button
+                className="icon-btn danger"
+                title="Remover"
+                onClick={() => onDelete(bm)}
+              >
+                ✕
+              </button>
+            </div>
+          )}
         </div>
       )}
     </section>
   )
 }
 
-function SearchResults({ results, onEdit, onDelete }) {
+function SearchResults({ results, canEdit, onEdit, onDelete }) {
   return (
     <div className="search-list">
       <div className="content-title">Busca</div>
@@ -399,22 +352,24 @@ function SearchResults({ results, onEdit, onDelete }) {
             <div className="bm-url">{hostOf(bm.url) || bm.url}</div>
             {bm.note && <div className="bm-note">{bm.note}</div>}
           </div>
-          <div className="bm-actions">
-            <button
-              className="icon-btn"
-              title="Editar"
-              onClick={() => onEdit(bm)}
-            >
-              ✎
-            </button>
-            <button
-              className="icon-btn danger"
-              title="Remover"
-              onClick={() => onDelete(bm)}
-            >
-              ✕
-            </button>
-          </div>
+          {canEdit && (
+            <div className="bm-actions">
+              <button
+                className="icon-btn"
+                title="Editar"
+                onClick={() => onEdit(bm)}
+              >
+                ✎
+              </button>
+              <button
+                className="icon-btn danger"
+                title="Remover"
+                onClick={() => onDelete(bm)}
+              >
+                ✕
+              </button>
+            </div>
+          )}
         </article>
       ))}
     </div>
@@ -640,26 +595,45 @@ function App() {
       <div className="body">
         <aside className={`sidebar${drawerOpen ? ' open' : ''}`}>
           <div className="side-label">Coleções</div>
-          {sortedCollections.map((col) => (
-            <div
-              key={col.id}
-              className={`side-item${col.id === activeCollection?.id ? ' active' : ''}`}
-              onClick={() => {
-                setActiveCollectionId(col.id)
-                setActiveCategoryId(null)
-                setDrawerOpen(false)
-              }}
-            >
-              <span className="side-name">
-                <span className="dot" style={{ background: col.color }} />
-                {' '}
-                {col.name}
-              </span>
-              <span className="count">
-                {countBookmarksFor(col.id, categories)}
-              </span>
-            </div>
-          ))}
+          {sortedCollections.map((col) => {
+            const colCount = countBookmarksFor(col.id, categories)
+            const hasCategories = categories.some((c) => c.collectionId === col.id)
+            return (
+              <div
+                key={col.id}
+                className={`side-item${col.id === activeCollection?.id ? ' active' : ''}`}
+                onClick={() => {
+                  setActiveCollectionId(col.id)
+                  setActiveCategoryId(null)
+                  setDrawerOpen(false)
+                }}
+              >
+                <span className="side-name">
+                  <span className="dot" style={{ background: col.color }} />
+                  {' '}
+                  {col.name}
+                </span>
+                <span className="side-right">
+                  <span className="count">{colCount}</span>
+                  {isAdmin && !hasCategories && (
+                    <button
+                      className="icon-btn danger"
+                      title="Remover"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (!window.confirm(`Apagar a coleção "${col.name}"?`)) return
+                        deleteCollection(col.id)
+                          .then(() => flash(`Coleção "${col.name}" apagada.`))
+                          .catch(() => flash('Não deu para apagar a coleção.'))
+                      }}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </span>
+              </div>
+            )
+          })}
           {isAdmin && (
             <>
               <button className="btn ghost side-new" onClick={handleAddCollection}>
@@ -687,6 +661,7 @@ function App() {
           ) : search.trim() ? (
             <SearchResults
               results={searchResults || []}
+              canEdit={isAdmin}
               onEdit={(bm) =>
                 setModal({
                   bookmark: {
@@ -722,6 +697,7 @@ function App() {
                 <BookmarkCombo
                   key={bm.id}
                   bm={bm}
+                  canEdit={isAdmin}
                   onEdit={(bm) =>
                     setModal({
                       bookmark: {
@@ -760,25 +736,43 @@ function App() {
           {rightCats.length === 0 && (
             <p className="hint">Sem categorias nesta coleção.</p>
           )}
-          {rightCats.map((cat) => (
-            <div
-              key={cat.id}
-              className={`side-item${cat.id === activeCategory?.id ? ' active' : ''}`}
-              onClick={() => {
-                setActiveCategoryId(cat.id === activeCategory?.id ? null : cat.id)
-                setDrawerRightOpen(false)
-              }}
-            >
-              <span className="side-name">
-                <span className="dot" style={{ background: cat.color }} />
-                {' '}
-                {cat.name}
-              </span>
-              <span className="count">
-                {(linksByCategory.get(cat.id) || []).length}
-              </span>
-            </div>
-          ))}
+          {rightCats.map((cat) => {
+            const catCount = (linksByCategory.get(cat.id) || []).length
+            return (
+              <div
+                key={cat.id}
+                className={`side-item${cat.id === activeCategory?.id ? ' active' : ''}`}
+                onClick={() => {
+                  setActiveCategoryId(cat.id === activeCategory?.id ? null : cat.id)
+                  setDrawerRightOpen(false)
+                }}
+              >
+                <span className="side-name">
+                  <span className="dot" style={{ background: cat.color }} />
+                  {' '}
+                  {cat.name}
+                </span>
+                <span className="side-right">
+                  <span className="count">{catCount}</span>
+                  {isAdmin && catCount === 0 && (
+                    <button
+                      className="icon-btn danger"
+                      title="Remover"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (!window.confirm(`Apagar a categoria "${cat.name}"?`)) return
+                        deleteCategory(cat.id)
+                          .then(() => flash(`Categoria "${cat.name}" apagada.`))
+                          .catch(() => flash('Não deu para apagar a categoria.'))
+                      }}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </span>
+              </div>
+            )
+          })}
           {isAdmin && (
             <button
               className="btn ghost side-new"
@@ -800,8 +794,6 @@ function App() {
         <BookmarkModal
           bookmark={modal.bookmark}
           defaultCategoryId={modal.defaultCategoryId}
-          categories={categories}
-          collections={collections}
           onSave={handleSaveBookmark}
           onClose={() => setModal(null)}
         />
