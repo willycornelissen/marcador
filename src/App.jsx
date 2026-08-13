@@ -461,6 +461,7 @@ function App() {
   const favoriteCats = (activeCollection?.favoriteCategoryIds || [])
     .map((id) => rightCats.find((c) => c.id === id))
     .filter(Boolean)
+    .sort(byName)
 
   const categoriesByBookmark = useMemo(() => {
     const map = new Map()
@@ -784,7 +785,14 @@ function App() {
                 <span className="panel-head-sub">Sem categorias favoritas</span>
               ) : (
                 favoriteCats.map((cat) => (
-                  <div key={cat.id} className="fav-item">
+                  <div
+                    key={cat.id}
+                    className={`fav-item${cat.id === activeCategory?.id ? ' active' : ''}`}
+                    onClick={() => {
+                      setActiveCategoryId(cat.id === activeCategory?.id ? null : cat.id)
+                      setDrawerRightOpen(false)
+                    }}
+                  >
                     <span
                       className="swatch"
                       style={{
@@ -797,7 +805,10 @@ function App() {
                       <button
                         className="icon-btn fav-star on"
                         title="Remover dos favoritos"
-                        onClick={() => toggleFavorite(cat)}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          toggleFavorite(cat)
+                        }}
                       >
                         ★
                       </button>
@@ -849,7 +860,6 @@ function App() {
                       {isFav ? '★' : '☆'}
                     </button>
                   )}
-                  <span className="count">{catCount}</span>
                   {isAdmin && catCount === 0 && (
                     <button
                       className="icon-btn danger"
@@ -865,6 +875,7 @@ function App() {
                       ✕
                     </button>
                   )}
+                  <span className="count">{catCount}</span>
                 </span>
               </div>
             )
