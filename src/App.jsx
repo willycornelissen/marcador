@@ -784,37 +784,48 @@ function App() {
               {favoriteCats.length === 0 ? (
                 <span className="panel-head-sub">Sem categorias favoritas</span>
               ) : (
-                favoriteCats.map((cat) => (
-                  <div
-                    key={cat.id}
-                    className={`fav-item${cat.id === activeCategory?.id ? ' active' : ''}`}
-                    onClick={() => {
-                      setActiveCategoryId(cat.id === activeCategory?.id ? null : cat.id)
-                      setDrawerRightOpen(false)
-                    }}
-                  >
-                    <span
-                      className="swatch"
-                      style={{
-                        background: `color-mix(in srgb, ${cat.color} 28%, transparent)`,
-                        boxShadow: `inset 0 0 0 1px ${cat.color}40`,
-                      }}
-                    />
-                    <span className="fav-name">{cat.name}</span>
-                    {isAdmin && (
-                      <button
-                        className="icon-btn fav-star on"
-                        title="Remover dos favoritos"
+                <>
+                  <div className="panel-favs-title">Favoritas</div>
+                  {favoriteCats.map((cat) => (
+                    <div
+                      key={cat.id}
+                      className={`fav-item${cat.id === activeCategory?.id ? ' active' : ''}`}
+                    >
+                      <a
+                        className="fav-link"
+                        href="#"
                         onClick={(e) => {
-                          e.stopPropagation()
-                          toggleFavorite(cat)
+                          e.preventDefault()
+                          setActiveCategoryId(
+                            cat.id === activeCategory?.id ? null : cat.id
+                          )
+                          setDrawerRightOpen(false)
                         }}
                       >
-                        ★
-                      </button>
-                    )}
-                  </div>
-                ))
+                        <span
+                          className="swatch"
+                          style={{
+                            background: `color-mix(in srgb, ${cat.color} 28%, transparent)`,
+                            boxShadow: `inset 0 0 0 1px ${cat.color}40`,
+                          }}
+                        />
+                        <span className="fav-name">{cat.name}</span>
+                      </a>
+                      {isAdmin && (
+                        <button
+                          className="icon-btn fav-star on"
+                          title="Remover dos favoritos"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            toggleFavorite(cat)
+                          }}
+                        >
+                          ★
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </>
               )}
             </div>
           </div>
