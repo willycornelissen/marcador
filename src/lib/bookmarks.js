@@ -7,6 +7,7 @@ import {
   onSnapshot,
   query,
   serverTimestamp,
+  updateDoc,
   where,
   writeBatch,
 } from 'firebase/firestore'
@@ -77,6 +78,14 @@ export async function deleteCollection(id) {
     links.forEach((d) => batch.delete(doc(db, 'bookmark_categories', d.id)))
   }
   await batch.commit()
+}
+
+// Favoritas: lista de até 3 categorias por coleção, salva na própria coleção.
+export async function updateCollectionFavorites(collectionId, favoriteCategoryIds) {
+  await updateDoc(doc(db, 'collections', collectionId), {
+    favoriteCategoryIds,
+    updatedAt: serverTimestamp(),
+  })
 }
 
 // ---------------- Categorias ----------------

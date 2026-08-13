@@ -330,6 +330,50 @@ body {
   color: var(--text-3);
 }
 
+.panel-favs {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.fav-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-2);
+  min-height: 24px;
+}
+
+.fav-item .swatch {
+  width: 14px;
+  height: 14px;
+  margin-right: 0;
+}
+
+.fav-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fav-star {
+  color: var(--text-3);
+  font-size: 14px;
+}
+
+.fav-star:hover {
+  color: var(--accent);
+  background: transparent;
+}
+
+.fav-star.on {
+  color: var(--accent);
+}
+
 .side-item {
   display: flex;
   align-items: center;

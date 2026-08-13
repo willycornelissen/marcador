@@ -11,6 +11,7 @@ import {
   importCatalog,
   subscribeData,
   updateBookmark,
+  updateCollectionFavorites,
 } from './lib/bookmarks'
 import { buildNetscape, parseNetscape } from './lib/netscape'
 import { colorFor } from './lib/colors'
@@ -440,8 +441,8 @@ function App() {
     }
   }, [collections, sortedCollections, activeCollectionId])
 
-  function flash(message) {
-    setNotice(message)
+  function flash(message, kind = 'notice') {
+    setNotice({ message, kind })
     setTimeout(() => setNotice(null), 5000)
   }
 
@@ -456,6 +457,10 @@ function App() {
   const rightCats = categories
     .filter((c) => c.collectionId === activeCollection?.id)
     .sort(byName)
+
+  const favoriteCats = (activeCollection?.favoriteCategoryIds || [])
+    .map((id) => rightCats.find((c) => c.id === id))
+    .filter(Boolean)
 
   const categoriesByBookmark = useMemo(() => {
     const map = new Map()
@@ -526,9 +531,30 @@ function App() {
       .catch(() => flash('Não deu para criar a coleção.'))
   }
 
+  function toggleFavorite(cat) {
+    const current = (activeCollection?.favoriteCategoryIds || []).filter((id) =>
+      rightCats.some((c) => c.id === id)
+    )
+    if (current.includes(cat.id)) {
+      return updateCollectionFavorites(
+        activeCollection.id,
+        current.filter((id) => id !== cat.id)
+      ).catch(() => flash('Não deu para atualizar os favoritos.', 'warning'))
+    }
+    if (current.length >= 3) {
+      flash('A lista de favoritos está cheia. Remova uma categoria da lista primeiro.', 'warning')
+      return
+    }
+    return updateCollectionFavorites(activeCollection.id, [...current, cat.id]).catch(
+      () => flash('Não deu para atualizar os favoritos.', 'warning')
+    )
+  }
+
   return (
     <div className="app">
-      {notice && <div className="notice bar">{notice}</div>}
+      {notice && (
+        <div className={`${notice.kind} bar`}>{notice.message}</div>
+      )}
       <header className="header">
         <button className="hamb" onClick={() => setDrawerOpen((v) => !v)}>
           <span />
@@ -753,9 +779,32 @@ function App() {
                 <span className="panel-head-name-text">{activeCollection.name}</span>
               </span>
             )}
-            <div className="panel-head-sub">
-              <span>Categorias</span>
-              <span className="count">{rightCats.length}</span>
+            <div className="panel-favs">
+              {favoriteCats.length === 0 ? (
+                <span className="panel-head-sub">Sem categorias favoritas</span>
+              ) : (
+                favoriteCats.map((cat) => (
+                  <div key={cat.id} className="fav-item">
+                    <span
+                      className="swatch"
+                      style={{
+                        background: `color-mix(in srgb, ${cat.color} 28%, transparent)`,
+                        boxShadow: `inset 0 0 0 1px ${cat.color}40`,
+                      }}
+                    />
+                    <span className="fav-name">{cat.name}</span>
+                    {isAdmin && (
+                      <button
+                        className="icon-btn fav-star on"
+                        title="Remover dos favoritos"
+                        onClick={() => toggleFavorite(cat)}
+                      >
+                        ★
+                      </button>
+                    )}
+                  </div>
+                ))
+              )}
             </div>
           </div>
           {rightCats.length === 0 && (
@@ -763,6 +812,7 @@ function App() {
           )}
           {rightCats.map((cat) => {
             const catCount = (linksByCategory.get(cat.id) || []).length
+            const isFav = favoriteCats.some((c) => c.id === cat.id)
             return (
               <div
                 key={cat.id}
@@ -783,6 +833,22 @@ function App() {
                   {cat.name}
                 </span>
                 <span className="side-right">
+                  {isAdmin && (
+                    <button
+                      className={`icon-btn fav-star${isFav ? ' on' : ''}`}
+                      title={
+                        isFav
+                          ? 'Remover dos favoritos'
+                          : 'Adicionar aos favoritos'
+                      }
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        toggleFavorite(cat)
+                      }}
+                    >
+                      {isFav ? '★' : '☆'}
+                    </button>
+                  )}
                   <span className="count">{catCount}</span>
                   {isAdmin && catCount === 0 && (
                     <button
