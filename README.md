@@ -119,7 +119,7 @@ O domínio próprio `marcador.willy.dev.br` é configurado pelo arquivo
 | --- | --- |
 | `collections` | `name`, `position`, `color?`, `favoriteCategoryIds?`, `uid`, `createdAt`, `updatedAt` |
 | `categories` | `collectionId`, `name`, `position`, `color`, `uid`, `createdAt`, `updatedAt` |
-| `bookmarks` | `name`, `url`, `note`, `favicon`, `uid`, `createdAt`, `updatedAt` |
+| `bookmarks` | `name`, `url`, `note`, `favicon`, `favorite?`, `uid`, `createdAt`, `updatedAt` |
 | `bookmark_categories` | `bookmarkId`, `categoryId`, `position` |
 
 ## Scripts

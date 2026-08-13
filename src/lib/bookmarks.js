@@ -154,6 +154,14 @@ export async function deleteBookmark(id) {
   await batch.commit()
 }
 
+// Favorito de bookmark: flag booleana que o destaca no topo das listas.
+export async function setBookmarkFavorite(id, favorite) {
+  await updateDoc(doc(db, 'bookmarks', id), {
+    favorite: !!favorite,
+    updatedAt: serverTimestamp(),
+  })
+}
+
 // ---------------- Import em lote ----------------
 
 // Grava um catálogo inteiro (coleções → categorias → bookmarks) em batches.

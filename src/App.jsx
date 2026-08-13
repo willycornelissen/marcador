@@ -9,6 +9,7 @@ import {
   deleteCategory,
   deleteCollection,
   importCatalog,
+  setBookmarkFavorite,
   subscribeData,
   updateBookmark,
   updateCollectionFavorites,
@@ -283,7 +284,7 @@ function ImportExport({ catalog, onImported, onMessage }) {
   )
 }
 
-function BookmarkCombo({ bm, canEdit, onEdit, onDelete }) {
+function BookmarkCombo({ bm, canEdit, onEdit, onDelete, onToggleFavorite }) {
   const [open, setOpen] = useState(true)
   return (
     <section className={`cat-card${open ? ' open' : ''}`}>
@@ -310,6 +311,17 @@ function BookmarkCombo({ bm, canEdit, onEdit, onDelete }) {
           {bm.note && <div className="bm-note">{bm.note}</div>}
           {canEdit && (
             <div className="bm-actions">
+              <button
+                className={`icon-btn fav-star${bm.favorite ? ' on' : ''}`}
+                title={
+                  bm.favorite
+                    ? 'Remover dos favoritos'
+                    : 'Adicionar aos favoritos'
+                }
+                onClick={() => onToggleFavorite(bm)}
+              >
+                {bm.favorite ? '★' : '☆'}
+              </button>
               <button className="icon-btn" title="Editar" onClick={() => onEdit(bm)}>
                 ✎
               </button>
@@ -492,7 +504,10 @@ function App() {
     return (linksByCategory.get(activeCategory.id) || [])
       .map((id) => bookmarksById.get(id))
       .filter(Boolean)
-      .sort(byName)
+      .sort(
+        (a, b) =>
+          Number(!!b.favorite) - Number(!!a.favorite) || byName(a, b)
+      )
   }, [activeCategory, linksByCategory, bookmarksById])
 
   const searchResults = useMemo(() => {
@@ -522,6 +537,12 @@ function App() {
       return updateBookmark(modal.bookmark.id, fields, categoryIds)
     }
     return addBookmark(fields, categoryIds)
+  }
+
+  function handleToggleFavorite(bm) {
+    return setBookmarkFavorite(bm.id, !bm.favorite).catch(() =>
+      flash('Não deu para atualizar o favorito.', 'warning')
+    )
   }
 
   function handleAddCollection() {
@@ -750,6 +771,7 @@ function App() {
                       .then(() => flash('Bookmark apagado.'))
                       .catch(() => flash('Não deu para apagar.'))
                   }}
+                  onToggleFavorite={handleToggleFavorite}
                 />
               ))}
             </div>
