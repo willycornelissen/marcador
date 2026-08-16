@@ -250,7 +250,12 @@ function ImportExport({ catalog, onImported, onMessage }) {
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = 'marcador.html'
+      const now = new Date()
+      const year = now.getFullYear()
+      const month = String(now.getMonth() + 1).padStart(2, '0')
+      const day = String(now.getDate()).padStart(2, '0')
+      const dateStr = `${year}-${month}-${day}`
+      a.download = `marcador-${dateStr}.html`
       a.click()
       URL.revokeObjectURL(url)
       onMessage('Export gerado.')
@@ -523,6 +528,39 @@ function App() {
       .sort(byName)
   }, [search, bookmarks])
 
+  const exportedCatalog = useMemo(() => {
+    return sortedCollections.map((col) => {
+      const colCats = categories
+        .filter((cat) => cat.collectionId === col.id)
+        .sort(byName)
+
+      const nestedCategories = colCats.map((cat) => {
+        const catBmIds = linksByCategory.get(cat.id) || []
+        const catBms = catBmIds
+          .map((id) => bookmarksById.get(id))
+          .filter(Boolean)
+          .sort(
+            (a, b) =>
+              Number(!!b.favorite) - Number(!!a.favorite) || byName(a, b)
+          )
+
+        return {
+          name: cat.name,
+          bookmarks: catBms.map((bm) => ({
+            name: bm.name,
+            url: bm.url,
+            note: bm.note || '',
+          })),
+        }
+      })
+
+      return {
+        name: col.name,
+        categories: nestedCategories,
+      }
+    })
+  }, [sortedCollections, categories, linksByCategory, bookmarksById])
+
   function countBookmarksFor(colId, cats) {
     const catIds = new Set(cats.filter((c) => c.collectionId === colId).map((c) => c.id))
     let total = 0
@@ -698,7 +736,7 @@ function App() {
                 + Nova coleção
               </button>
               <ImportExport
-                catalog={collections}
+                catalog={exportedCatalog}
                 onMessage={flash}
                 onImported={(c) =>
                   flash(
