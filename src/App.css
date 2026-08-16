@@ -94,6 +94,24 @@ body {
   white-space: nowrap;
 }
 
+.logo-subtitle {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-2);
+  letter-spacing: normal;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  border-left: 1px solid var(--border);
+  padding-left: 10px;
+  margin-left: 3px;
+  display: inline-block;
+}
+
+@media (max-width: 960px) {
+  .logo-subtitle {
+    display: none;
+  }
+}
+
 .logo-mark {
   width: 28px;
   height: 28px;

@@ -629,6 +629,7 @@ function App() {
             </svg>
           </span>
           Marcador
+          <span className="logo-subtitle">Bookmarks de Willy Garabini Cornelissen</span>
         </a>
         <div className="search">
           <svg viewBox="0 0 24 24">
