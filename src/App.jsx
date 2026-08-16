@@ -245,17 +245,19 @@ function ImportExport({ catalog, onImported, onMessage }) {
     setBusy(true)
     setError(null)
     try {
-      const text = buildNetscape(catalog)
-      const blob = new Blob([text], { type: 'text/html' })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
       const now = new Date()
       const year = now.getFullYear()
       const month = String(now.getMonth() + 1).padStart(2, '0')
       const day = String(now.getDate()).padStart(2, '0')
-      const dateStr = `${year}-${month}-${day}`
-      a.download = `marcador-${dateStr}.html`
+      const formattedDate = `${day}/${month}/${year}`
+      const title = `Marcador - Backup - ${formattedDate}`
+      const text = buildNetscape(catalog, title)
+      const blob = new Blob([text], { type: 'text/html' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      const fileDateStr = `${day}-${month}-${year}`
+      a.download = `Marcador - Backup - ${fileDateStr}.html`
       a.click()
       URL.revokeObjectURL(url)
       onMessage('Export gerado.')
