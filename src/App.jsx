@@ -287,7 +287,7 @@ function ImportExport({ catalog, onImported, onMessage }) {
 function BookmarkCombo({ bm, canEdit, onEdit, onDelete, onToggleFavorite }) {
   const [open, setOpen] = useState(true)
   return (
-    <section className={`cat-card${open ? ' open' : ''}`}>
+    <section className={`cat-card${open ? ' open' : ''}${bm.favorite ? ' favorite' : ''}`}>
       <button
         className="cat-head"
         aria-expanded={open}

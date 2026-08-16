@@ -543,6 +543,12 @@ body {
   padding: 14px;
   background: var(--surface);
   align-self: start;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.cat-card.favorite {
+  background: var(--accent-soft);
+  border-color: var(--accent-strong);
 }
 
 .cat-head {
